@@ -1,0 +1,81 @@
+# Control Plane Render Blueprint
+services:
+  # PostgreSQL Database for the Control Plane
+  - type: pserv
+    name: control-plane-db
+    plan: starter
+    databaseName: control_plane
+    user: control_plane_user
+    ipAllowList: [] # Private network only
+
+  # Redis for Celery Message Brokering
+  - type: pserv
+    name: control-plane-redis
+    plan: starter
+    service: redis
+    ipAllowList: [] # Private network only
+
+  # Backend API Service (Django)
+  - type: web
+    name: control-plane-backend
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: "python manage.py deploy && gunicorn backend.wsgi:application"
+    plan: starter
+    healthCheckPath: /api/health/ # Health check endpoint
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: control-plane-db
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: pserv
+          name: control-plane-redis
+          property: connectionString
+      - key: DJANGO_SETTINGS_MODULE
+        value: backend.settings
+      - key: PYTHON_VERSION
+        value: 3.13
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: SECRET_KEY
+        sync: false # Set in dashboard
+      - key: RENDER_API_KEY
+        sync: false # Set in dashboard
+
+  # Celery Worker Service
+  - type: worker
+    name: control-plane-worker
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: "celery -A backend worker -l info"
+    plan: starter
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: control-plane-db
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: pserv
+          name: control-plane-redis
+          property: connectionString
+      - key: DJANGO_SETTINGS_MODULE
+        value: backend.settings
+      - key: PYTHON_VERSION
+        value: 3.13
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: SECRET_KEY
+        sync: false # Set in dashboard
+      - key: RENDER_API_KEY
+        sync: false # Set in dashboard

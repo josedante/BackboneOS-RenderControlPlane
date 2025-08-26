@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view
 from django.utils.text import slugify
 from django.db import transaction
 from .models import Tenant
@@ -9,6 +9,16 @@ from .serializers import TenantSerializer
 import logging
 
 logger = logging.getLogger(__name__)
+
+@api_view(['GET'])
+def health_check(request):
+    """
+    Simple health check endpoint for deployment monitoring.
+    """
+    return Response({
+        'status': 'healthy',
+        'message': 'Control Plane API is running'
+    }, status=status.HTTP_200_OK)
 
 # Create your views here.
 
