@@ -17,6 +17,8 @@ class Tenant(models.Model):
     )
     # Stores the unique IDs of all Render services for this tenant
     render_service_ids = models.JSONField(default=dict, blank=True) 
+    # Optional custom plugin repository URL for personalized code
+    custom_plugin_repo = models.URLField(blank=True, null=True, help_text="Git repository URL for custom plugins")
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
