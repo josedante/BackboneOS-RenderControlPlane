@@ -21,5 +21,16 @@ class Tenant(models.Model):
     custom_plugin_repo = models.URLField(blank=True, null=True, help_text="Git repository URL for custom plugins")
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        verbose_name = 'Tenant'
+        verbose_name_plural = 'Tenants'
+        ordering = ['-created_at']  # Most recent first
+        indexes = [
+            models.Index(fields=['status']),  # For filtering by status
+            models.Index(fields=['created_at']),  # For date-based queries
+            models.Index(fields=['name']),  # For name searches
+            models.Index(fields=['status', 'created_at']),  # Composite index for status + date queries
+        ]
+
     def __str__(self):
         return self.name
